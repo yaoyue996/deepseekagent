@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>插件开发指南 · DeepSeekAgent</title>
+<style>
+  :root {
+    --blue: #4D6BFE; --blue-deep: #3B55E6; --blue-light: #7B93FF;
+    --bg: #0e1122; --bg-soft: #171a2e;
+    --card: rgba(255,255,255,0.05); --card-border: rgba(255,255,255,0.10);
+    --text: #eef0ff; --text-dim: #a9b0cc;
+    --accent-grad: linear-gradient(135deg, #4D6BFE 0%, #7B93FF 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+  a { color: var(--blue-light); text-decoration: none; }
+  .bg-glow { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(600px 400px at 15% 0%, rgba(77,107,254,0.25), transparent 60%),
+                radial-gradient(700px 500px at 90% 20%, rgba(123,147,255,0.18), transparent 60%),
+                radial-gradient(500px 500px at 50% 100%, rgba(59,85,230,0.22), transparent 60%); }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  header { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: rgba(14,17,34,0.7); border-bottom: 1px solid var(--card-border); }
+  .nav { display: flex; align-items: center; height: 64px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); }
+  .brand .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-grad); display: grid; place-items: center; font-size: 18px; }
+  .nav .links { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .nav .links a { color: var(--text-dim); font-size: 14px; }
+  .nav .links a:hover { color: var(--text); }
+  .nav .links a.on { color: var(--blue-light); font-weight: 600; }
+
+  main.doc { padding: 48px 0 64px; }
+  .doc-hero { text-align: center; margin-bottom: 40px; }
+  .doc-hero h1 { font-size: 34px; font-weight: 800;
+    background: linear-gradient(120deg, #fff 20%, #9db2ff 60%, #4D6BFE 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .doc-hero p { color: var(--text-dim); margin-top: 10px; font-size: 15px; }
+
+  #md { font-size: 15px; }
+  #md h1, #md h2, #md h3, #md h4 { margin: 32px 0 14px; line-height: 1.35; }
+  #md h1 { font-size: 26px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
+  #md h2 { font-size: 22px; }
+  #md h3 { font-size: 18px; color: var(--blue-light); }
+  #md p { margin: 12px 0; color: var(--text); }
+  #md a { color: var(--blue-light); border-bottom: 1px dashed rgba(123,147,255,0.4); }
+  #md code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(77,107,254,0.16); padding: 2px 6px; border-radius: 6px; font-size: 13.5px; color: #c7d2ff; }
+  #md pre { background: #0b0e1c; border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; overflow-x: auto; margin: 16px 0; }
+  #md pre code { background: none; padding: 0; color: #dbe4ff; font-size: 13.5px; line-height: 1.6; }
+  #md ul, #md ol { margin: 12px 0; padding-left: 26px; }
+  #md li { margin: 6px 0; }
+  #md blockquote { border-left: 3px solid var(--blue); background: rgba(77,107,254,0.08); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; color: var(--text-dim); }
+  #md table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  #md th, #md td { border: 1px solid var(--card-border); padding: 10px 14px; text-align: left; }
+  #md th { background: rgba(77,107,254,0.15); }
+  #md td code { font-size: 13px; }
+  #md hr { border: none; border-top: 1px solid var(--card-border); margin: 32px 0; }
+
+  footer { border-top: 1px solid var(--card-border); padding: 32px 0; text-align: center; color: var(--text-dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="index.html"><span class="logo">🐳</span> DeepSeekAgent</a>
+    <div class="links">
+      <a href="index.html">首页</a>
+      <a class="on" href="dsaphelp.html">插件开发</a>
+      <a href="index.html#changelog">更新日志</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap doc">
+  <div class="doc-hero">
+    <h1>DSA 插件开发助手</h1>
+    <p>以下内容与仓库内 <code>README.md</code> 实时同步，指导你如何为 DeepSeekAgent 开发 jar 插件。</p>
+  </div>
+  <div id="md"></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>DeepSeekAgent · 插件开发指南 · <a href="README.md">查看原始 README.md</a></p>
+  </div>
+</footer>
+
+<script type="text/markdown" id="readme-src">
+# DeepSeekAgent 插件开发指南
+
+DeepSeekAgent 开放了插件开发 API，允许第三方开发者以 **jar 插件** 的形式为 Agent 扩展自定义工具。本文档指导你如何开发、打包与安装插件。
+
+## 1. 插件运行机制
+
+- 插件以 **jar 文件** 分发，jar 内需包含 **`classes.dex`**（Android 可加载格式），而不是普通的 Java `.class` jar。
+- 应用通过 `DexClassLoader` 动态加载插件，并以应用类加载器为父加载器（接口从宿主解析）。
+- 插件须在 jar 根目录放置一个 **`plugin.properties`** 标记文件，用于指定入口类。
+
+## 2. 目录约定
+
+| 路径 | 说明 |
+| --- | --- |
+| `/storage/emulated/0/DSA/Plugins` | 插件目录。安装 APK 后自动创建；App 启动时自动扫描其中的 `.jar` 并加载 |
+
+导入功能：在 App 内「设置 → 插件 → 导入插件」选择 jar 文件，会自动复制到上述目录并加载。
+
+## 3. 插件 API
+
+插件需实现以下接口（包名与签名必须完全一致，以保证运行时接口解析）：
+
+```kotlin
+package com.deepseekv2.agent.plugin.api
+
+interface PluginTool {
+    fun name(): String
+    fun description(): String
+    fun parameters(): String
+    fun execute(arguments: String): String
+}
+
+interface DeepSeekPlugin {
+    fun id(): String
+    fun name(): String
+    fun version(): String
+    fun description(): String
+    fun tools(): List<PluginTool>
+}
+```
+
+> 上述接口代码可直接复制到你的插件工程中（`compileOnly` 作用域），**不要**打包进插件 jar。
+
+## 4. 插件打包约定
+
+一个合法的插件 jar 结构：
+
+```
+my-plugin.jar
+├── classes.dex
+├── plugin.properties
+└── (可选) 其他资源
+```
+
+`plugin.properties` 内容：
+
+```properties
+class=com.example.myplugin.MyPlugin
+```
+
+## 5. 开发步骤
+
+### 5.1 编写插件类
+
+```kotlin
+package com.example.myplugin
+
+import com.deepseekv2.agent.plugin.api.DeepSeekPlugin
+import com.deepseekv2.agent.plugin.api.PluginTool
+
+class MyPlugin : DeepSeekPlugin {
+    override fun id() = "com.example.myplugin"
+    override fun name() = "示例插件"
+    override fun version() = "1.0.0"
+    override fun description() = "一个演示工具调用方式的示例插件"
+
+    override fun tools(): List<PluginTool> = listOf(
+        object : PluginTool {
+            override fun name() = "greet"
+            override fun description() = "根据姓名打招呼"
+            override fun parameters() =
+                """{"type":"object","properties":{"name":{"type":"string","description":"姓名"}},"required":["name"]}"""
+            override fun execute(arguments: String): String {
+                val name = extractName(arguments)
+                return "你好，$name！"
+            }
+        }
+    )
+
+    private fun extractName(arguments: String): String = TODO("用 JSON 库解析")
+}
+```
+
+### 5.2 构建 dex 化的 jar
+
+**方式 A：Gradle Android Library 模块**
+
+1. 新建 `com.android.library` 模块，将 API 接口以 `compileOnly` 依赖加入。
+2. 构建出 AAR，解压后取其 `classes.jar`（已含 `classes.dex`）。
+3. 重命名为你的插件名 `.jar`。
+4. 用 `jar`/`zip` 工具在根目录加入 `plugin.properties`。
+
+**方式 B：手动 javac + d8（无需 Gradle）**
+
+```bash
+# 1. 编译
+javac -source 8 -target 8 -cp android.jar:api.jar -d classes $(find src -name '*.java')
+
+# 2. 用 build-tools 的 d8 生成 dex
+$ANDROID_HOME/build-tools/版本/d8 classes/**/*.class --release --output .
+
+# 3. 打包（classes.dex 必须在 jar 根目录）
+jar -cf my-plugin.jar classes.dex plugin.properties
+```
+
+## 6. 安装与使用
+
+1. 将生成的 `.jar` 复制到 `/storage/emulated/0/DSA/Plugins/`；
+2. 或在 App 内「设置 → 插件 → 导入插件」选择 jar 文件；
+3. 重启 App（或点击「刷新」）后，插件提供的工具会自动加入 Agent 工具列表。
+
+## 7. 注意事项
+
+- **接口一致性**：`DeepSeekPlugin` / `PluginTool` 的包名、方法名、签名必须与 API 完全一致。
+- **Java 插件**：返回集合请使用 `java.util.List`。
+- **异常处理**：`execute` 抛出异常会被宿主捕获并反馈给模型。
+- **权限**：插件运行在宿主进程中，无独立权限。
+- **线程**：`execute` 在后台线程执行，建议超时 30s 内返回。
+</script>
+
+<script>
+(function () {
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function inline(s) {
+    s = esc(s);
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    return s;
+  }
+  function render(md) {
+    var lines = md.split(/\r?\n/);
+    var html = '', i = 0, inCode = false, codeBuf = [], listType = null;
+    function closeList() { if (listType) { html += '</' + listType + '>'; listType = null; } }
+    while (i < lines.length) {
+      var line = lines[i];
+      if (/^\s*```/.test(line)) {
+        if (inCode) { html += '<pre><code>' + esc(codeBuf.join('\n')) + '</code></pre>'; codeBuf = []; inCode = false; }
+        else { closeList(); inCode = true; }
+        i++; continue;
+      }
+      if (inCode) { codeBuf.push(line); i++; continue; }
+      var t = line.trim();
+      if (t === '') { i++; continue; }
+      var m = /^(#{1,6})\s+(.*)$/.exec(line);
+      if (m) { closeList(); var lv = m[1].length; html += '<h' + lv + '>' + inline(m[2]) + '</h' + lv + '>'; i++; continue; }
+      if (/^(-{3,}|\*{3,})$/.test(t)) { closeList(); html += '<hr>'; i++; continue; }
+      var sep = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      if (t.indexOf('|') === 0 && /^[\s|:-]+$/.test(sep) && sep.indexOf('-') >= 0) {
+        closeList();
+        var head = t.split('|').filter(function (x) { return x.trim() !== ''; }).map(function (x) { return '<th>' + inline(x.trim()) + '</th>'; }).join('');
+        html += '<table><thead><tr>' + head + '</tr></thead><tbody>';
+        i += 2;
+        while (i < lines.length && lines[i].trim().indexOf('|') === 0) {
+          var cells = lines[i].split('|').filter(function (x) { return x.trim() !== ''; }).map(function (x) { return '<td>' + inline(x.trim()) + '</td>'; }).join('');
+          html += '<tr>' + cells + '</tr>'; i++;
+        }
+        html += '</tbody></table>'; continue;
+      }
+      m = /^\s*[-*+]\s+(.*)$/.exec(line);
+      if (m) { if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; } html += '<li>' + inline(m[1]) + '</li>'; i++; continue; }
+      m = /^\s*\d+\.\s+(.*)$/.exec(line);
+      if (m) { if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; } html += '<li>' + inline(m[1]) + '</li>'; i++; continue; }
+      if (t.charAt(0) === '>') { closeList(); html += '<blockquote>' + inline(t.replace(/^>\s?/, '')) + '</blockquote>'; i++; continue; }
+      closeList(); html += '<p>' + inline(t) + '</p>'; i++;
+    }
+    closeList();
+    return html;
+  }
+  var el = document.getElementById('md');
+  var fallback = document.getElementById('readme-src').textContent.trim();
+  fetch('README.md')
+    .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+    .then(function (md) { el.innerHTML = render(md); })
+    .catch(function () { el.innerHTML = render(fallback); });
+})();
+</script>
+</body>
+</html>

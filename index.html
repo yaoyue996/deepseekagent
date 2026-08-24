@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeekAgent — 安卓 AI 智能体</title>
+<!--
+  GitHub 仓库地址占位符：请将下面两个链接替换为你的真实仓库地址
+  1. GitHub 跳转按钮 (href="#")
+  2. 下载按钮 (href="#")
+-->
+<style>
+  :root {
+    --blue: #4D6BFE;
+    --blue-deep: #3B55E6;
+    --blue-light: #7B93FF;
+    --bg: #0e1122;
+    --bg-soft: #171a2e;
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.10);
+    --text: #eef0ff;
+    --text-dim: #a9b0cc;
+    --accent-grad: linear-gradient(135deg, #4D6BFE 0%, #7B93FF 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* 背景光斑 */
+  .bg-glow {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(600px 400px at 15% 0%, rgba(77,107,254,0.25), transparent 60%),
+      radial-gradient(700px 500px at 90% 20%, rgba(123,147,255,0.18), transparent 60%),
+      radial-gradient(500px 500px at 50% 100%, rgba(59,85,230,0.22), transparent 60%);
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* 顶栏 */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: rgba(14,17,34,0.7);
+    border-bottom: 1px solid var(--card-border);
+  }
+  .nav { display: flex; align-items: center; height: 64px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .brand .logo {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--accent-grad);
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .nav .links { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .nav .links a { color: var(--text-dim); font-size: 14px; transition: color .2s; }
+  .nav .links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer; transition: transform .15s, box-shadow .2s, opacity .2s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--accent-grad); color: #fff; box-shadow: 0 8px 24px rgba(77,107,254,0.35); }
+  .btn-primary:hover { box-shadow: 0 12px 30px rgba(77,107,254,0.5); }
+  .btn-ghost { background: var(--card); border-color: var(--card-border); color: var(--text); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* Hero */
+  .hero { padding: 88px 0 64px; text-align: center; }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
+    border-radius: 999px; background: rgba(77,107,254,0.15); border: 1px solid rgba(77,107,254,0.3);
+    color: var(--blue-light); font-size: 13px; margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 64px); font-weight: 800; letter-spacing: -1px;
+    background: linear-gradient(120deg, #ffffff 20%, #9db2ff 60%, #4D6BFE 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p.sub { color: var(--text-dim); font-size: 18px; max-width: 640px; margin: 20px auto 0; }
+  .hero .cta { display: flex; gap: 14px; justify-content: center; margin-top: 36px; flex-wrap: wrap; }
+
+  /* 特性 */
+  section { padding: 56px 0; }
+  .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .section-sub { color: var(--text-dim); margin-bottom: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
+    padding: 24px; transition: transform .2s, border-color .2s, background .2s;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(77,107,254,0.5); background: rgba(255,255,255,0.08); }
+  .card .icon { font-size: 28px; margin-bottom: 14px; }
+  .card h3 { font-size: 17px; margin-bottom: 8px; }
+  .card p { color: var(--text-dim); font-size: 14px; }
+
+  /* 下载区 */
+  .download {
+    text-align: center; padding: 48px 24px; border-radius: 24px;
+    background: linear-gradient(135deg, rgba(77,107,254,0.16), rgba(123,147,255,0.08));
+    border: 1px solid rgba(77,107,254,0.35);
+  }
+  .download h2 { font-size: 26px; margin-bottom: 12px; }
+  .download p { color: var(--text-dim); margin-bottom: 28px; }
+  .download .meta { margin-top: 20px; font-size: 13px; color: var(--text-dim); }
+
+  /* 更新日志 */
+  .changelog { position: relative; }
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 8px; top: 6px; bottom: 6px;
+    width: 2px; background: linear-gradient(180deg, var(--blue), transparent);
+  }
+  .version { position: relative; margin-bottom: 28px; }
+  .version::before {
+    content: ""; position: absolute; left: -26px; top: 8px; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--accent-grad); box-shadow: 0 0 0 4px rgba(77,107,254,0.2);
+  }
+  .version .ver-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .version .tag {
+    font-weight: 700; font-size: 17px; color: #fff;
+    padding: 2px 12px; border-radius: 999px; background: var(--accent-grad);
+  }
+  .version .date { color: var(--text-dim); font-size: 13px; }
+  .version ul { list-style: none; }
+  .version ul li { position: relative; padding-left: 20px; color: var(--text-dim); margin: 6px 0; font-size: 14.5px; }
+  .version ul li::before { content: "→"; position: absolute; left: 0; color: var(--blue-light); }
+
+  footer {
+    border-top: 1px solid var(--card-border); margin-top: 40px;
+    padding: 36px 0; text-align: center; color: var(--text-dim); font-size: 13px;
+  }
+  @media (max-width: 600px) {
+    .nav .links a.hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="logo">🐳</span> DeepSeekAgent</div>
+    <div class="links">
+      <a class="hide-sm" href="#features">特性</a>
+      <a class="hide-sm" href="#changelog">更新日志</a>
+      <a class="hide-sm" href="dsaphelp.html">插件开发</a>
+      <a href="#download" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        下载
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<div class="hero wrap">
+  <div class="badge">🐳 安卓 · AI 智能体 · 开源</div>
+  <h1>DeepSeekAgent</h1>
+  <p class="sub">一个兼容 DeepSeek 全模型、支持自定义服务商与自定义模型的安卓 AI 智能体，带来深度思考、工具调用与多模态理解的一站式体验。</p>
+  <div class="cta">
+    <a href="#" target="_blank" rel="noopener" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-1.96c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.05 11.05 0 015.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56C20.71 21.39 24 17.08 24 12 24 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+    <a href="https://1833587609.share.123pan.cn/123pan/uLWHTd-mq9Hd" target="_blank" rel="noopener" class="btn btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      下载 APK
+    </a>
+  </div>
+</div>
+
+<!-- 特性 -->
+<section id="features">
+  <div class="wrap">
+    <h2 class="section-title">核心特性</h2>
+    <p class="section-sub">为 DeepSeek 大模型量身打造的原生安卓客户端与智能体。</p>
+    <div class="grid">
+      <div class="card"><div class="icon">🧠</div><h3>DeepSeek 全模型</h3><p>兼容官方 API，内置 deepseek-v4-pro、deepseek-v4-flash、deepseek-v4-flash-vision-exp。</p></div>
+      <div class="card"><div class="icon">🔌</div><h3>自定义服务商</h3><p>任意 OpenAI 兼容接口的 Base URL + API Key + 自定义模型，一键测试连通性。</p></div>
+      <div class="card"><div class="icon">🤖</div><h3>智能体（Agent）</h3><p>深度思考（reasoning）、工具调用与多轮自动推理，实时展示调用过程。</p></div>
+      <div class="card"><div class="icon">🧰</div><h3>内置工具集</h3><p>时间、计算器、网页抓取、设备信息、文件读写，联网搜索可一键开关。</p></div>
+      <div class="card"><div class="icon">🖼️</div><h3>多模态视觉</h3><p>支持上传图片，视觉模型识别图像内容并作答。</p></div>
+      <div class="card"><div class="icon">📁</div><h3>自定义工作区</h3><p>通过系统文件夹选择器自由指定 agent 读写文件的目录。</p></div>
+      <div class="card"><div class="icon">💬</div><h3>流式对话</h3><p>实时流式输出，支持 Markdown 渲染、代码块、思考过程折叠。</p></div>
+      <div class="card"><div class="icon">🎨</div><h3>现代 UI</h3><p>毛玻璃悬浮卡片、开屏动画、深浅主题切换，贴近 DeepSeek 官方客户端。</p></div>
+      <div class="card"><div class="icon">🧩</div><h3>插件生态</h3><p>开放插件开发 API，jar 插件可扩展 Agent 工具，支持应用内导入。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 下载 -->
+<section id="download">
+  <div class="wrap">
+    <div class="download">
+      <h2>立即下载</h2>
+      <p>获取最新版 DeepSeekAgent，安装后填入 API Key 即可开始使用。</p>
+      <a href="https://1833587609.share.123pan.cn/123pan/uLWHTd-mq9Hd" target="_blank" rel="noopener" class="btn btn-primary" style="padding:14px 34px; font-size:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        下载 APK
+      </a>
+      <div class="meta">当前版本 v2.4.0 · 包名 com.deepseekv2.agent · Android 8.0+</div>
+    </div>
+  </div>
+</section>
+
+<!-- 更新日志 -->
+<section id="changelog">
+  <div class="wrap changelog">
+    <h2 class="section-title">更新日志</h2>
+    <p class="section-sub">每一次迭代都记录在案。</p>
+    <div class="timeline">
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.4.0</span><span class="date">最新</span></div>
+        <ul>
+          <li>开放插件开发 API：开发者可用 jar 插件为 Agent 扩展自定义工具。</li>
+          <li>新增插件目录 /storage/emulated/0/DSA/Plugins，安装 APK 自动生成。</li>
+          <li>新增「导入插件」功能：应用内选择 jar 文件，自动复制到插件目录并加载。</li>
+          <li>提供插件开发指南 README.md。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.3.0</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>新增开屏动画：DeepSeekAgent 字样逐字浮现 + 呼吸光晕 + 进度条，带平滑过渡进入主界面。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.2.0</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>底部输入框改为毛玻璃质感的悬浮圆角卡片，贴近 DeepSeek 官方客户端风格。</li>
+          <li>新增主题切换：默认（跟随系统）/ 浅色 / 深色。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.1.0</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>新增自定义工作区：通过系统文件夹选择器（SAF）指定 agent 文件读写目录。</li>
+          <li>模型选择器由底部弹层改为毛玻璃悬浮圆角卡片，不再紧贴屏幕底部。</li>
+          <li>新增联网搜索开关，可一键启用/禁用网页抓取工具。</li>
+          <li>工作区设置移至设置页显眼位置。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.0.2</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>新增文件读写工具：list_files / read_file / write_file，沙箱化到工作区并防止路径越界。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.0.1</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>修复 agent 无权限问题：允许明文 HTTP 流量，网页抓取工具可访问 http:// 网页。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v2.0.0</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>视觉模型 deepseek-v4-vision-exp 更改为 deepseek-v4-flash-vision-exp。</li>
+          <li>修复图片上传后无法正常显示、模型无法识别图片的 bug。</li>
+          <li>包名更改为 com.deepseekv2.agent，应用名更改为 DeepSeekAgentV2。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v1.0.1</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>修复工具 JSON Schema 错误（calculate / http_fetch 的 properties 嵌套错误导致 HTTP 400）。</li>
+        </ul>
+      </div>
+
+      <div class="version">
+        <div class="ver-head"><span class="tag">v1.0.0</span><span class="date">2026-08-23</span></div>
+        <ul>
+          <li>首个版本发布：DeepSeekAgent 安卓 AI 智能体。</li>
+          <li>兼容 https://api.deepseek.com 与 deepseek-v4-pro / deepseek-v4-flash / deepseek-v4-vision-exp。</li>
+          <li>支持自定义服务商 URL 与自定义模型。</li>
+          <li>DeepSeek 风格 UI、流式对话、深度思考与 Markdown 渲染。</li>
+          <li>内置工具：时间、计算器、网页抓取、设备信息。</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>DeepSeekAgent · 开源安卓 AI 智能体 · 兼容 DeepSeek 全模型</p>
+    <p style="margin-top:8px;">© 2026 DeepSeekAgent · <a href="https://github.com/yourname/DeepSeekAgent" target="_blank" rel="noopener" style="color:var(--blue-light);">GitHub</a></p>
+  </div>
+</footer>
+</body>
+</html>
