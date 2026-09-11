@@ -154,4 +154,4 @@ jar -cf my-plugin.jar classes.dex plugin.properties
 
 ---
 
-© 2026 DeepSeekAgent · 版本 2.4.0
+© 2026 DeepSeekAgent · 版本 2.5.0
